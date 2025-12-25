@@ -1,12 +1,9 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use App\Models\Book;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Category;
-
 class BookController extends Controller
 {
     public function __construct()
@@ -14,28 +11,18 @@ class BookController extends Controller
         $this->middleware('auth')->except(['index', 'show']);
         $this->middleware('role:admin')->except(['index', 'show']);
     }
-
-
-
-    
     public function index(Request $request)
     {
        
-        $query = \App\Models\Book::latest();
-        
-        
+        $query = \App\Models\Book::latest();  
         $search = trim($request->input('search'));
-
         if (!empty($search)) {
-
             $query->where(function ($q) use ($search) {
                 
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhere('author', 'like', "%{$search}%");
             });
         }
-        
-      
         $books = $query->paginate(10)->withQueryString();
         
         return view('books.index', compact('books'));
@@ -46,7 +33,6 @@ class BookController extends Controller
         return view('books.create', compact('categories'));
     }
 
-    
     public function store(Request $request)
     {
     $validated = $request->validate([
@@ -68,22 +54,16 @@ class BookController extends Controller
     
     return redirect()->route('books.index')->with('success', 'Thêm sách thành công!');
     }
-
-
-
-    
     public function show(Book $book)
     {
         return view('books.show', compact('book'));
     }
 
-   
     public function edit(Book $book)
     {
         $categories = Category::all();
         return view('books.edit', compact('book', 'categories')); // ⬅️ TRUYỀN DỮ LIỆU
     }
-
     public function update(Request $request, Book $book)
     {
         $request->validate([
@@ -95,27 +75,21 @@ class BookController extends Controller
             'description' => 'nullable|string',
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
-
         $data = $request->all();
-
         if ($request->hasFile('cover_image')) {
             if ($book->cover_image) {
                 Storage::disk('public')->delete($book->cover_image);
             }
             $data['cover_image'] = $request->file('cover_image')->store('covers', 'public');
         }
-
         $book->update($data);
-
         return redirect()->route('books.index')->with('success', 'Cập nhật sách thành công!');
     }
-
     public function destroy(Book $book)
     {
         if ($book->cover_image) {
             Storage::disk('public')->delete($book->cover_image);
         }
-
         $book->delete();
         return redirect()->route('books.index')->with('success', 'Xóa sách thành công!');
     }

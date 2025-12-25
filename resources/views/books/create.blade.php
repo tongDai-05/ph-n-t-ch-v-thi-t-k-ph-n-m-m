@@ -25,8 +25,6 @@
             <input type="number" class="form-control" id="price" name="price" required min="0">
         </div>
 
-      
-
         <div class="mb-3">
             <label for="description" class="form-label">Mô tả</label>
             <textarea class="form-control" id="description" name="description" rows="4"></textarea>

@@ -26,7 +26,6 @@
                     <td>{{ $order->customer_name }} ({{ $order->customer_email }})</td>
                     <td>{{ number_format($order->total_price, 0, ',', '.') }} đ</td>
                     <td>
-                        {{-- Hiển thị trạng thái với màu sắc tương ứng --}}
                         @php
                             $badgeClass = [
                                 'pending' => 'bg-warning text-dark',

@@ -34,17 +34,17 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 @if($item->book->cover_image)
-                                    <img src="{{ asset('storage/' . $item->book->cover_image) }}" width="40" height="60" class="me-3 shadow-sm" style="object-fit: cover;">
+                                    <img src="{{ str_starts_with($item->book->cover_image, 'imgs/') ? asset($item->book->cover_image) : asset('storage/' . $item->book->cover_image) }}" width="40" height="60" class="me-3 shadow-sm" style="object-fit: cover;">
                                 @endif
                                 <span>{{ $item->book->title }}</span>
                             </div>
                         </td>
                         <td>{{ number_format($item->price, 0, ',', '.') }} đ</td>
                         <td>
-                            {{-- FORM CẬP NHẬT SỐ LƯỢNG --}}
+                            
                             <form action="{{ route('cart.update', $item->id) }}" method="POST" class="d-flex">
                                 @csrf
-                                {{-- Laravel chỉ chấp nhận POST, nên dùng method PUT/PATCH giả --}}
+                                
                                 @method('POST') 
                                 
                                 <input 
@@ -52,16 +52,14 @@
                                     name="quantity" 
                                     value="{{ $item->quantity }}" 
                                     min="1" 
-                                    {{-- Thiết lập max bằng số lượng tồn kho --}}
                                     max="{{ $item->book->quantity }}" 
                                     class="form-control form-control-sm me-2" 
                                     style="width: 70px;" 
-                                    {{-- Tự động submit khi giá trị thay đổi --}}
+
                                     onchange="this.form.submit()" 
                                     required
                                 >
                             </form>
-                            {{-- THÔNG BÁO KHI TỒN KHO THẤP --}}
                             @if($item->quantity > $item->book->quantity)
                                 <small class="text-danger">Vượt quá tồn kho (Max: {{ $item->book->quantity }})</small>
                             @elseif($item->book->quantity < 5)
@@ -70,7 +68,6 @@
                         </td>
                         <td>{{ number_format($item->price * $item->quantity, 0, ',', '.') }} đ</td>
                         <td>
-                            {{-- Form xóa item --}}
                             <form action="{{ route('cart.destroy', $item->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('DELETE')
@@ -85,7 +82,6 @@
         
         <div class="d-flex justify-content-end align-items-center mt-4">
             <h4 class="me-4">Tổng tiền giỏ hàng: <span class="text-danger">{{ number_format($total, 0, ',', '.') }} đ</span></h4>
-            {{-- CHUYỂN HƯỚNG ĐẾN TRANG CHECKOUT --}}
             <a href="{{ route('checkout') }}" class="btn btn-success btn-lg">Thanh toán (Checkout)</a>
         </div>
     @endif

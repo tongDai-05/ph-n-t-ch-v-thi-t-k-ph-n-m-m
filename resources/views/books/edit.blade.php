@@ -37,7 +37,7 @@
             <label class="form-label">Ảnh bìa (chọn ảnh mới nếu muốn đổi)</label>
             <input type="file" name="cover_image" class="form-control"> 
             @if($book->cover_image) 
-                <img src="{{ asset('storage/'.$book->cover_image) }}" alt="Ảnh bìa" class="mt-2" style="width:120px;">
+                <img src="{{ str_starts_with($book->cover_image, 'imgs/') ? asset($book->cover_image) : asset('storage/' . $book->cover_image) }}" alt="Ảnh bìa" class="mt-2" style="width:120px;">
             @endif
         </div>
 

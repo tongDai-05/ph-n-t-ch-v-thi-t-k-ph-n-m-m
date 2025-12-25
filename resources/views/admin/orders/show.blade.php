@@ -8,13 +8,11 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
     
-    {{-- Hiển thị thông báo lỗi khi không thể hoàn tiền --}}
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
     <div class="row">
-        {{-- CỘT BÊN TRÁI: THÔNG TIN CHUNG --}}
         <div class="col-md-5">
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
@@ -29,8 +27,6 @@
                     <h5 class="mt-3"><strong>Tổng cộng:</strong> <span class="text-danger">{{ number_format($order->total_price, 0, ',', '.') }} đ</span></h5>
                 </div>
             </div>
-            
-            {{-- FORM CẬP NHẬT TRẠNG THÁI --}}
             <div class="card mb-4">
                 <div class="card-header bg-warning text-dark">
                     Cập nhật Trạng thái
@@ -55,16 +51,12 @@
                     </form>
                 </div>
             </div>
-            
-            {{-- NÚT HOÀN TIỀN/HỦY ĐƠN HÀNG --}}
             <div class="card">
                 <div class="card-header bg-danger text-white">
                     Thao tác nguy hiểm
                 </div>
                 <div class="card-body">
-                    {{-- Chỉ hiển thị nút Hoàn tiền nếu đơn hàng chưa bị Hủy hoặc Hoàn thành --}}
                     @if(!in_array($order->status, ['cancelled', 'completed']))
-                        {{-- SỬA: Đổi route từ admin.orders.refund sang admin.orders.processRefund --}}
                         <form action="{{ route('admin.orders.processRefund', $order->id) }}" method="POST" onsubmit="return confirm('Xác nhận hoàn tiền và hủy đơn hàng #{{ $order->id }}? Thao tác này KHÔNG thể hoàn tác và sẽ cập nhật lại tồn kho.')">
                             @csrf
                             <button type="submit" class="btn btn-danger w-100">

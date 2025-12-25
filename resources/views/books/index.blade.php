@@ -13,7 +13,6 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
     
-    {{-- FORM TÌM KIẾM --}}
     <form method="GET" action="{{ route('books.index') }}" class="mb-4">
         <div class="input-group">
             <input 
@@ -28,7 +27,7 @@
             @endif
         </div>
     </form>
-    {{-- END FORM TÌM KIẾM --}}
+    
 
     <table class="table table-bordered table-hover align-middle">
         <thead class="table-dark">
@@ -43,14 +42,14 @@
             </tr>
         </thead>
         <tbody>
-            {{-- ĐÃ KHÔI PHỤC VÒNG LẶP HIỂN THỊ SÁCH --}}
+           
             @forelse ($books as $book)
                 <tr>
                     <td>{{ $book->id }}</td>
                     <td>
-                        {{-- Dùng cover_image đã được đồng bộ --}}
+                        
                         @if($book->cover_image) 
-                            <img src="{{ asset($book->cover_image) }}" width="60" height="80" style="object-fit: cover;">
+                            <img src="{{ str_starts_with($book->cover_image, 'imgs/') ? asset($book->cover_image) : asset('storage/' . $book->cover_image) }}" width="60" height="80" style="object-fit: cover;">
                         @else
                             <span class="text-muted">Không có ảnh</span>
                         @endif
@@ -73,7 +72,7 @@
                     </td>
                 </tr>
             @empty
-                {{-- THÔNG BÁO KHI KHÔNG CÓ KẾT QUẢ --}}
+            
                 <tr>
                     <td colspan="7" class="text-center text-muted p-4">
                         Không tìm thấy cuốn sách nào.

@@ -4,13 +4,13 @@
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-4">
-            <img src="{{ asset($book->cover_image) }}" class="img-fluid rounded shadow-sm" alt="{{ $book->title }}">
+            <img src="{{ str_starts_with($book->cover_image, 'imgs/') ? asset($book->cover_image) : asset('storage/' . $book->cover_image) }}" class="img-fluid rounded shadow-sm" alt="{{ $book->title }}">
         </div>
         <div class="col-md-8">
             <h2 class="mb-3">{{ $book->title }}</h2>
             <p class="fs-5"><strong>Tác giả:</strong> {{ $book->author }}</p>
             
-            {{-- GIÁ VÀ TRẠNG THÁI TỒN KHO --}}
+          
             <h3 class="text-danger fw-bold my-4">
                 Giá: {{ number_format($book->price, 0, ',', '.') }} VNĐ
             </h3>
@@ -24,8 +24,7 @@
             </p>
 
             <hr>
-            
-            {{-- FORM THÊM VÀO GIỎ HÀNG --}}
+          
             @if($book->quantity > 0)
                 <form action="{{ route('cart.store') }}" method="POST" class="d-flex align-items-center mb-4">
                     @csrf
@@ -47,8 +46,7 @@
                     <button type="submit" class="btn btn-primary">
                         🛒 Thêm vào giỏ hàng
                     </button>
-                    
-                    {{-- Hiển thị thông báo lỗi nếu có --}}
+              
                     @if(session('error'))
                         <div class="text-danger ms-3">{{ session('error') }}</div>
                     @endif
@@ -57,12 +55,11 @@
             
             <h4 class="mt-5 mb-3 text-info">Mô tả sách</h4>
             <p style="white-space: pre-wrap;">{{ $book->description }}</p>
-            
-            {{-- CÁC NÚT HÀNH ĐỘNG --}}
+       
             <div class="mt-4 pt-3 border-top">
                 <a href="{{ route('books.index') }}" class="btn btn-secondary">Quay lại</a>
                 
-                {{-- Các nút quản trị chỉ dành cho admin --}}
+             
                 @if(auth()->check() && auth()->user()->role === 'admin')
                     <a href="{{ route('books.edit', $book->id) }}" class="btn btn-warning">Sửa</a>
                     <form action="{{ route('books.destroy', $book->id) }}" method="POST" class="d-inline">
