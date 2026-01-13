@@ -41,4 +41,5 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
     Route::post('orders/{order}/process-refund', [AdminOrderController::class, 'processRefund'])->name('orders.processRefund');
     Route::post('orders/{order}/admin-cancel', [AdminOrderController::class, 'adminCancelOrder'])->name('orders.adminCancel');
+    Route::get('dashboard', [AdminOrderController::class, 'dashboard'])->name('dashboard');
 });

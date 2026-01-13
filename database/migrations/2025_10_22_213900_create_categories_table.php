@@ -7,13 +7,16 @@ use Illuminate\Support\Facades\Schema;
 return new class extends \Illuminate\Database\Migrations\Migration
 {
     public function up()
-    {
+{
+    
+    if (!Schema::hasTable('categories')) {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->timestamps();
         });
     }
+}
 
     public function down()
     {

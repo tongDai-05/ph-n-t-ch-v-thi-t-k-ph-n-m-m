@@ -31,6 +31,14 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label">Phương thức thanh toán</label>
+                    <select name="payment_method" class="form-control" required>
+                        <option value="cod">Thanh toán khi nhận hàng (COD)</option>
+                        <option value="online">Chuyển khoản ngân hàng</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
                     <label for="customer_phone" class="form-label">Số điện thoại</label>
                     <input type="text" class="form-control @error('customer_phone') is-invalid @enderror" id="customer_phone" name="customer_phone" value="{{ old('customer_phone') }}" required>
                     @error('customer_phone')

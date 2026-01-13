@@ -1,23 +1,16 @@
-<?php
-// File: resources/views/layouts/app.blade.php
-
-?>
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'Website Bán Sách Tự Động') }}</title>
 
-    <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
 
-    <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body>
@@ -32,37 +25,48 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    {{-- Left Side Of Navbar - SỬ DỤNG CHO CÁC LIÊN KẾT CHÍNH --}}
+                    {{-- Left Side Of Navbar --}}
                     <ul class="navbar-nav me-auto">
-                        {{-- Thêm liên kết Trang chủ hoặc Sách ở đây nếu cần --}}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('books.index') }}">Sách</a>
                         </li>
                     
-                        {{-- THÊM LIÊN KẾT ADMIN DASHBOARD/QUẢN LÝ ĐƠN HÀNG --}}
+                        {{-- PHẦN DÀNH CHO ADMIN --}}
                         @auth
                             @if (Auth::user()->role === 'admin')
+                                @php
+                                    // Đếm số đơn hàng khách yêu cầu hủy nhưng trạng thái chưa phải là 'cancelled'
+                                    $pendingCancels = \App\Models\Order::where('cancellation_requested', true)
+                                                                      ->where('status', '!=', 'cancelled')
+                                                                      ->count();
+                                @endphp
                                 <li class="nav-item">
-                                    <a class="nav-link text-danger fw-bold" href="{{ route('admin.orders.index') }}">
+                                    <a class="nav-link text-danger fw-bold position-relative" href="{{ route('admin.orders.index') }}">
                                         🛠️ Quản lý Đơn hàng
+                                        @if($pendingCancels > 0)
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" title="Có {{ $pendingCancels }} yêu cầu hủy mới">
+                                                {{ $pendingCancels }}
+                                            </span>
+                                        @endif
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-primary fw-bold" href="{{ route('admin.dashboard') }}">
+                                        📊 Thống kê doanh thu
                                     </a>
                                 </li>
                             @endif
                         @endauth
-                        
                     </ul>
 
-                    {{-- Right Side Of Navbar - CHỈ CHỨA GIỎ HÀNG VÀ AUTH LINKS --}}
+                    {{-- Right Side Of Navbar --}}
                     <ul class="navbar-nav ms-auto">
-                        
-                        {{-- LIÊN KẾT GIỎ HÀNG --}}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('cart.index') }}">
                                 🛒 Giỏ hàng
                             </a>
                         </li>
                         
-                        {{-- AUTHENTICATION LINKS (Login/Register/Logout Dropdown) --}}
                         @guest
                             @if (Route::has('login'))
                                 <li class="nav-item">
@@ -76,7 +80,6 @@
                                 </li>
                             @endif
                         @else
-                            {{-- LIÊN KẾT LỊCH SỬ ĐƠN HÀNG ĐỘC LẬP (NÊN THÊM ĐỂ TRÁNH LỖI DROPPER) --}}
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('orders.history') }}">
                                     Lịch sử Đơn hàng
@@ -84,15 +87,11 @@
                             </li>
 
                             <li class="nav-item dropdown">
-                                {{-- Thẻ A chỉ dùng để hiển thị tên và toggle dropdown --}}
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     {{ Auth::user()->name }}
                                 </a>
 
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                    {{-- BỎ LIÊN KẾT LỊCH SỬ ĐƠN HÀNG KHỎI DROP DOWN ĐỂ TRÁNH NHẦM LẪN VÀ ĐƯA RA NGOÀI --}}
-                                    
-                                    {{-- GIỮ LẠI LOGOUT --}}
                                     <a class="dropdown-item" href="{{ route('logout') }}"
                                        onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
