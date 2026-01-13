@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    /**
-     * Lấy giỏ hàng hiện tại (Hỗ trợ cả Auth và Guest)
-     */
+    
     protected function getCartForCheckout()
     {
         return Auth::check() 
@@ -31,7 +29,7 @@ class OrderController extends Controller
 
         $cartItems = $cart->items()->with('book')->get();
         
-        // Kiểm tra tồn kho trước khi cho vào trang checkout
+        
         foreach ($cartItems as $item) {
             if ($item->quantity > $item->book->quantity) {
                 return redirect()->route('cart.index')->with('error', "Sách '{$item->book->title}' không đủ hàng.");
@@ -71,7 +69,7 @@ class OrderController extends Controller
             $cartItems = $cart->items()->with('book')->get();
             $totalPrice = $cartItems->sum(fn($item) => $item->price * $item->quantity);
 
-            // 1. Tạo đơn hàng trước với tổng tiền đã tính
+           
             $order = Order::create(array_merge($validated, [
                 'user_id'        => Auth::id(),
                 'total_price'    => $totalPrice,
@@ -79,10 +77,8 @@ class OrderController extends Controller
                 'payment_method' => $request->payment_method,
                 'payment_status' => ($request->payment_method === 'cod') ? 'unpaid' : 'pending_online',
             ]));
-
-            // 2. Xử lý từng item và trừ tồn kho
             foreach ($cartItems as $item) {
-                // Sử dụng lockForUpdate để tránh tranh chấp số lượng (Race Condition)
+                
                 $book = Book::where('id', $item->book_id)->lockForUpdate()->first();
 
                 if ($item->quantity > $book->quantity) {
@@ -100,12 +96,12 @@ class OrderController extends Controller
                 ]);
             }
 
-            // 3. Xóa giỏ hàng
+           
             $cart->delete(); 
 
             DB::commit();
 
-            // Lưu ID đơn hàng vào session để cho phép Guest xem trang success
+            
             session()->put('last_order_id', $order->id);
 
             return redirect()->route('orders.show', $order->id)
@@ -119,10 +115,7 @@ class OrderController extends Controller
 
     public function showOrder(Order $order)
     {
-        // Kiểm tra quyền xem đơn hàng:
-        // 1. Nếu là chủ đơn hàng (đã log in)
-        // 2. Nếu là Admin
-        // 3. Nếu là khách vừa đặt xong (ID nằm trong session)
+        
         $isOwner = Auth::check() && $order->user_id === Auth::id();
         $isAdmin = Auth::check() && Auth::user()->role === 'admin';
         $isGuestRecentlyOrdered = session('last_order_id') == $order->id;

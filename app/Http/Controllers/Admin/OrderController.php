@@ -41,11 +41,6 @@ class OrderController extends Controller
 
         return view('admin.orders.show', compact('order', 'statuses'));
     }
-
-
-    
-
- 
     public function updateStatus(Request $request, Order $order)
     {
         $validated = $request->validate([
