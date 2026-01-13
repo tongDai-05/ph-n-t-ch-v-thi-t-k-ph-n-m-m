@@ -19,7 +19,6 @@ class OrderController extends Controller
         $this->middleware('role:admin');
     }
 
-    
     public function index()
     {
         $orders = Order::latest()->paginate(20);
@@ -27,8 +26,7 @@ class OrderController extends Controller
         return view('admin.orders.index', compact('orders'));
     }
 
-    
-    
+ 
     public function show(Order $order)
     {
         $order->load('items');
@@ -44,32 +42,44 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order', 'statuses'));
     }
 
+
+    
+
+ 
     public function updateStatus(Request $request, Order $order)
     {
         $validated = $request->validate([
             'status' => 'required|in:processing,shipped,completed,cancelled',
         ]);
 
-        $order->update(['status' => $validated['status']]);
+        $updateData = ['status' => $validated['status']];
 
-        return redirect()->back()->with('success', 'Đã cập nhật trạng thái đơn hàng!');
+      
+        if ($validated['status'] === 'completed') {
+            $updateData['payment_status'] = 'paid';
+        }
+
+        $order->update($updateData);
+
+        return redirect()->back()->with('success', 'Đã cập nhật trạng thái đơn hàng và thanh toán!');
     }
     
+     
     public function processRefund(Order $order)
     {
-        
         if (in_array($order->status, ['cancelled', 'completed'])) {
             return redirect()->back()->with('error', 'Không thể hoàn tiền cho đơn hàng đã ' . $order->status . '.');
         }
 
         DB::beginTransaction();
         try {
-           
-            $order->update(['status' => 'cancelled']);
-
             
+            $order->update([
+                'status' => 'cancelled',
+                'payment_status' => 'unpaid' 
+            ]);
+
             foreach ($order->items as $item) {
-                
                 $book = Book::find($item->book_id);
                 if ($book) {
                     $book->increment('quantity', $item->quantity);
@@ -82,50 +92,47 @@ class OrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
             return redirect()->back()->with('error', 'Lỗi: Không thể xử lý hoàn tiền. Vui lòng thử lại. Lỗi chi tiết: ' . $e->getMessage());
         }
     }
+
+    
     public function dashboard(Request $request)
-{
+    {
+        $inventory = \App\Models\Book::select('title', 'quantity', 'price')->get();
 
-    $inventory = \App\Models\Book::select('title', 'quantity', 'price')->get();
+        $date = $request->input('date', Carbon::today()->toDateString());
+        $month = $request->input('month', Carbon::now()->month);
+        $year = $request->input('year', Carbon::now()->year);
+        $viewType = $request->input('view_type', 'day');
 
+        $query = \App\Models\Order::where('status', 'completed');
 
-    $date = $request->input('date', Carbon::today()->toDateString());
-    $month = $request->input('month', Carbon::now()->month);
-    $year = $request->input('year', Carbon::now()->year);
-    $viewType = $request->input('view_type', 'day');
+        if ($viewType == 'day') {
+            $query->whereDate('created_at', $date);
+        } elseif ($viewType == 'month') {
+            $query->whereMonth('created_at', $month)->whereYear('created_at', $year);
+        } else {
+            $query->whereYear('created_at', $year);
+        }
 
-    $query = \App\Models\Order::where('status', 'completed');
+        $orders = $query->with('items')->get();
+        $totalRevenue = $orders->sum('total_price');
+        $booksSold = [];
 
-  
-    if ($viewType == 'day') {
-        $query->whereDate('created_at', $date);
-    } elseif ($viewType == 'month') {
-        $query->whereMonth('created_at', $month)->whereYear('created_at', $year);
-    } else {
-        $query->whereYear('created_at', $year);
-    }
-
-    $orders = $query->with('items')->get();
-
-    $totalRevenue = $orders->sum('total_price');
-    $booksSold = [];
-
-    foreach ($orders as $order) {
-        foreach ($order->items as $item) {
-            if (isset($booksSold[$item->book_id])) {
-                $booksSold[$item->book_id]['quantity'] += $item->quantity;
-            } else {
-                $booksSold[$item->book_id] = [
-                    'title' => $item->book_title,
-                    'quantity' => $item->quantity
-                ];
+        foreach ($orders as $order) {
+            foreach ($order->items as $item) {
+                if (isset($booksSold[$item->book_id])) {
+                    $booksSold[$item->book_id]['quantity'] += $item->quantity;
+                } else {
+                    $booksSold[$item->book_id] = [
+                        'title' => $item->book_title,
+                        'quantity' => $item->quantity
+                    ];
+                }
             }
         }
-    }
 
-    return view('admin.dashboard', compact('inventory', 'totalRevenue', 'booksSold', 'viewType', 'date', 'month', 'year'));
-}
+        return view('admin.dashboard', compact('inventory', 'totalRevenue', 'booksSold', 'viewType', 'date', 'month', 'year'));
+    }
 }

@@ -11,35 +11,34 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    /**
+     * Lấy giỏ hàng hiện tại (Hỗ trợ cả Auth và Guest)
+     */
     protected function getCartForCheckout()
     {
-        $cart = Auth::check() 
+        return Auth::check() 
             ? Auth::user()->carts()->first()
             : Cart::where('session_id', session()->getId())->first();
-        
-        return $cart;
     }
-
 
     public function checkout()
     {
         $cart = $this->getCartForCheckout();
 
         if (!$cart || $cart->items->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Giỏ hàng của bạn đang trống. Vui lòng thêm sách trước khi thanh toán.');
+            return redirect()->route('cart.index')->with('error', 'Giỏ hàng của bạn đang trống.');
         }
 
         $cartItems = $cart->items()->with('book')->get();
         
+        // Kiểm tra tồn kho trước khi cho vào trang checkout
         foreach ($cartItems as $item) {
             if ($item->quantity > $item->book->quantity) {
-                return redirect()->route('cart.index')->with('error', 'Sách "' . $item->book->title . '" không đủ số lượng trong kho. Vui lòng cập nhật giỏ hàng.');
+                return redirect()->route('cart.index')->with('error', "Sách '{$item->book->title}' không đủ hàng.");
             }
         }
 
-        $total = $cartItems->sum(function ($item) {
-            return $item->price * $item->quantity;
-        });
+        $total = $cartItems->sum(fn($item) => $item->price * $item->quantity);
 
         $userData = Auth::check() ? [
             'name' => Auth::user()->name,
@@ -49,91 +48,87 @@ class OrderController extends Controller
             'email' => old('customer_email'),
         ];
 
-
         return view('cart.checkout', compact('cartItems', 'total', 'userData'));
     }
 
     public function processOrder(Request $request)
-{
-    $validated = $request->validate([
-        'customer_name' => 'required|string|max:255',
-        'customer_email' => 'required|email|max:255',
-        'customer_phone' => 'required|string|max:20',
-        'shipping_address' => 'required|string|max:500',
-        'payment_method' => 'required|in:cod,online', 
-    ]);
+    {
+        $validated = $request->validate([
+            'customer_name'    => 'required|string|max:255',
+            'customer_email'   => 'required|email|max:255',
+            'customer_phone'   => 'required|string|max:20',
+            'shipping_address' => 'required|string|max:500',
+            'payment_method'   => 'required|in:cod,online', 
+        ]);
 
-    $cart = $this->getCartForCheckout();
-
-    if (!$cart || $cart->items->isEmpty()) {
-         return redirect()->route('cart.index')->with('error', 'Giỏ hàng của bạn đã bị thay đổi. Vui lòng kiểm tra lại.');
-    }
-    
-    $cartItems = $cart->items()->with('book')->get();
-
-    DB::beginTransaction();
-
-    try {
-        $totalPrice = 0;
-
-       
-        $paymentStatus = ($request->payment_method === 'cod') ? 'unpaid' : 'pending_online';
-
-        $order = Order::create(array_merge($validated, [
-            'user_id' => Auth::id(),
-            'total_price' => 0,
-            'status' => 'pending', 
-            'payment_method' => $request->payment_method,
-            'payment_status' => $paymentStatus,
-            'cancellation_requested' => false,
-        ]));
-
-        foreach ($cartItems as $item) {
-            $book = Book::find($item->book_id);
-
-            if ($item->quantity > $book->quantity) {
-                DB::rollBack();
-                return redirect()->route('cart.index')->with('error', 'Sách "' . $book->title . '" không đủ số lượng trong kho.');
-            }
-
-            $book->decrement('quantity', $item->quantity);
-
-            $order->items()->create([
-                'book_id' => $book->id,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->price,
-                'book_title' => $book->title,
-                'book_author' => $book->author,
-            ]);
-
-            $totalPrice += $item->price * $item->quantity;
+        $cart = $this->getCartForCheckout();
+        if (!$cart || $cart->items->isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống.');
         }
 
-        $order->update(['total_price' => $totalPrice]);
-        $cart->delete(); 
+        DB::beginTransaction();
+        try {
+            $cartItems = $cart->items()->with('book')->get();
+            $totalPrice = $cartItems->sum(fn($item) => $item->price * $item->quantity);
 
-        DB::commit();
+            // 1. Tạo đơn hàng trước với tổng tiền đã tính
+            $order = Order::create(array_merge($validated, [
+                'user_id'        => Auth::id(),
+                'total_price'    => $totalPrice,
+                'status'         => 'pending', 
+                'payment_method' => $request->payment_method,
+                'payment_status' => ($request->payment_method === 'cod') ? 'unpaid' : 'pending_online',
+            ]));
 
-       
-        return redirect()->route('orders.show', $order->id)->with('success', 'Đặt hàng thành công! Đơn hàng #' . $order->id . ' đang chờ quản trị viên xác nhận.');
+            // 2. Xử lý từng item và trừ tồn kho
+            foreach ($cartItems as $item) {
+                // Sử dụng lockForUpdate để tránh tranh chấp số lượng (Race Condition)
+                $book = Book::where('id', $item->book_id)->lockForUpdate()->first();
 
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return redirect()->route('cart.index')->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+                if ($item->quantity > $book->quantity) {
+                    throw new \Exception("Sách '{$book->title}' đã hết hàng trong lúc bạn thao tác.");
+                }
+
+                $book->decrement('quantity', $item->quantity);
+
+                $order->items()->create([
+                    'book_id'     => $book->id,
+                    'quantity'    => $item->quantity,
+                    'unit_price'  => $item->price,
+                    'book_title'  => $book->title,
+                    'book_author' => $book->author,
+                ]);
+            }
+
+            // 3. Xóa giỏ hàng
+            $cart->delete(); 
+
+            DB::commit();
+
+            // Lưu ID đơn hàng vào session để cho phép Guest xem trang success
+            session()->put('last_order_id', $order->id);
+
+            return redirect()->route('orders.show', $order->id)
+                             ->with('success', 'Đặt hàng thành công!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('cart.index')->with('error', $e->getMessage());
+        }
     }
-}
+
     public function showOrder(Order $order)
     {
+        // Kiểm tra quyền xem đơn hàng:
+        // 1. Nếu là chủ đơn hàng (đã log in)
+        // 2. Nếu là Admin
+        // 3. Nếu là khách vừa đặt xong (ID nằm trong session)
+        $isOwner = Auth::check() && $order->user_id === Auth::id();
+        $isAdmin = Auth::check() && Auth::user()->role === 'admin';
+        $isGuestRecentlyOrdered = session('last_order_id') == $order->id;
 
-        if (Auth::check()) {
-
-            $orderUserId = $order->user_id;
-
-            if ($orderUserId !== Auth::id() && Auth::user()->role !== 'admin') {
-                abort(403, 'Bạn không có quyền xem đơn hàng này.');
-            }
-        } else {
-             abort(403, 'Bạn phải đăng nhập để xem đơn hàng này.'); 
+        if (!$isOwner && !$isAdmin && !$isGuestRecentlyOrdered) {
+            abort(403, 'Bạn không có quyền xem đơn hàng này.');
         }
         
         return view('cart.order-success', compact('order'));
@@ -141,31 +136,28 @@ class OrderController extends Controller
 
     public function orderHistory()
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
+        if (!Auth::check()) return redirect()->route('login');
 
         $orders = Auth::user()->orders()->latest()->paginate(10);
-
         return view('cart.order-history', compact('orders'));
     }
 
     public function requestCancellation(Order $order)
     {
         if ($order->user_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'Bạn không có quyền truy cập đơn hàng này.');
+            return redirect()->back()->with('error', 'Hành động không hợp lệ.');
         }
 
-        if ($order->status === 'cancelled' || $order->status === 'completed') {
-            return redirect()->back()->with('error', 'Đơn hàng đã hoàn thành hoặc đã bị hủy. Không thể yêu cầu hủy.');
+        if (in_array($order->status, ['cancelled', 'completed', 'shipping'])) {
+            return redirect()->back()->with('error', 'Không thể hủy đơn hàng ở trạng thái này.');
         }
 
         if ($order->cancellation_requested) {
-             return redirect()->back()->with('error', 'Bạn đã gửi yêu cầu hủy đơn hàng này trước đó.');
+            return redirect()->back()->with('error', 'Bạn đã gửi yêu cầu trước đó.');
         }
 
         $order->update(['cancellation_requested' => true]);
 
-        return redirect()->back()->with('success', 'Yêu cầu hủy/hoàn tiền đơn hàng #' . $order->id . ' đã được gửi tới Admin. Chúng tôi sẽ phản hồi sớm!');
+        return redirect()->back()->with('success', 'Yêu cầu hủy đơn hàng đã được gửi.');
     }
 }
