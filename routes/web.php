@@ -33,6 +33,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/orders/history', [OrderController::class, 'orderHistory'])->name('orders.history');
     Route::get('/order/{order}', [OrderController::class, 'showOrder'])->name('orders.show');
     Route::post('/orders/{order}/cancel-request', [OrderController::class, 'requestCancellation'])->name('orders.requestCancellation');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
