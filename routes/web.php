@@ -3,6 +3,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 
 /*
@@ -44,4 +45,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('orders/{order}/process-refund', [AdminOrderController::class, 'processRefund'])->name('orders.processRefund');
     Route::post('orders/{order}/admin-cancel', [AdminOrderController::class, 'adminCancelOrder'])->name('orders.adminCancel');
     Route::get('dashboard', [AdminOrderController::class, 'dashboard'])->name('dashboard');
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    Route::get('users-search', [\App\Http\Controllers\Admin\UserController::class, 'search'])->name('users.search');
 });

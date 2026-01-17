@@ -34,29 +34,37 @@
                         {{-- PHẦN DÀNH CHO ADMIN --}}
                         @auth
                             @if (Auth::user()->role === 'admin')
-                                @php
-                                    // Đếm số đơn hàng khách yêu cầu hủy nhưng trạng thái chưa phải là 'cancelled'
-                                    $pendingCancels = \App\Models\Order::where('cancellation_requested', true)
-                                                                      ->where('status', '!=', 'cancelled')
-                                                                      ->count();
+                            @php
+                            // Đếm số đơn hàng khách yêu cầu hủy nhưng trạng thái chưa phải là 'cancelled'
+                                $pendingCancels = \App\Models\Order::where('cancellation_requested', true)
+                                              ->where('status', '!=', 'cancelled')
+                                              ->count();
                                 @endphp
-                                <li class="nav-item">
-                                    <a class="nav-link text-danger fw-bold position-relative" href="{{ route('admin.orders.index') }}">
-                                        🛠️ Quản lý Đơn hàng
-                                        @if($pendingCancels > 0)
-                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" title="Có {{ $pendingCancels }} yêu cầu hủy mới">
-                                                {{ $pendingCancels }}
-                                            </span>
-                                        @endif
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-primary fw-bold" href="{{ route('admin.dashboard') }}">
-                                        📊 Thống kê doanh thu
-                                    </a>
-                                </li>
-                            @endif
-                        @endauth
+        
+                            <li class="nav-item">
+                                <a class="nav-link text-danger fw-bold position-relative" href="{{ route('admin.orders.index') }}">
+                                    🛠️ Quản lý Đơn hàng
+                                @if($pendingCancels > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" title="Có {{ $pendingCancels }} yêu cầu hủy mới">
+                        {{ $pendingCancels }}
+                    </span>
+                @endif
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-success fw-bold" href="{{ route('admin.users.index') }}">
+                👤 Quản lý Người dùng
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-primary fw-bold" href="{{ route('admin.dashboard') }}">
+                📊 Thống kê doanh thu
+            </a>
+        </li>
+    @endif
+@endauth
                     </ul>
 
                     {{-- Right Side Of Navbar --}}
