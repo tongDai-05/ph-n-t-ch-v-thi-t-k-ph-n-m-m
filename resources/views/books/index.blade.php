@@ -85,19 +85,6 @@
         </tbody>
     </table>
 
-   <td>
-    <form action="{{ route('admin.books.import', $book->id) }}" method="POST" class="d-inline">
-        @csrf
-        <div class="input-group input-group-sm" style="width: 170px;">
-            <input type="number" name="added_quantity" class="form-control" placeholder="SL" required min="1">
-            <input type="number" name="import_price" class="form-control" placeholder="Giá vốn" required min="0" value="{{ $book->import_price }}">
-            <div class="input-group-append">
-                <button class="btn btn-primary btn-sm" type="submit">Nhập</button>
-            </div>
-        </div>
-    </form>
-</td>
-
     {{ $books->links() }}
 </div>
 @endsection

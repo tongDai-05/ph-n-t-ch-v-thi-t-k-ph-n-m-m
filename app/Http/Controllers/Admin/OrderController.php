@@ -93,49 +93,41 @@ class OrderController extends Controller
 
     
     public function dashboard(Request $request)
-{
-    // Lấy tồn kho kèm phân loại
-    $inventory = \App\Models\Book::with('category')->get();
+    {
+        $inventory = \App\Models\Book::select('title', 'quantity', 'price')->get();
 
-    // Lọc theo thời gian (giữ nguyên logic của bạn)
-    $date = $request->input('date', \Carbon\Carbon::today()->toDateString());
-    $viewType = $request->input('view_type', 'day');
+        $date = $request->input('date', Carbon::today()->toDateString());
+        $month = $request->input('month', Carbon::now()->month);
+        $year = $request->input('year', Carbon::now()->year);
+        $viewType = $request->input('view_type', 'day');
 
-    // Lấy các đơn hàng hoàn thành để tính lợi nhuận
-    // Lưu ý: Quan hệ trong Model Order của bạn là 'orderItems'
-    $orders = \App\Models\Order::where('status', 'completed')
-                ->with('orderItems.book')
-                ->get();
+        $query = \App\Models\Order::where('status', 'completed');
 
-    $totalRevenue = 0;
-    $totalProfit = 0;
-    $booksSold = [];
+        if ($viewType == 'day') {
+            $query->whereDate('created_at', $date);
+        } elseif ($viewType == 'month') {
+            $query->whereMonth('created_at', $month)->whereYear('created_at', $year);
+        } else {
+            $query->whereYear('created_at', $year);
+        }
 
-    foreach ($orders as $order) {
-        $totalRevenue += $order->total_price;
-        foreach ($order->orderItems as $item) {
-            $book = $item->book;
-            $revenue = $item->price * $item->quantity;
-            // Lợi nhuận = Doanh thu - (Giá nhập * Số lượng bán)
-            $profit = $revenue - (($book->import_price ?? 0) * $item->quantity);
+        $orders = $query->with('items')->get();
+        $totalRevenue = $orders->sum('total_price');
+        $booksSold = [];
 
-            $totalProfit += $profit;
-
-            if (isset($booksSold[$item->book_id])) {
-                $booksSold[$item->book_id]['quantity'] += $item->quantity;
-                $booksSold[$item->book_id]['revenue'] += $revenue;
-                $booksSold[$item->book_id]['profit'] += $profit;
-            } else {
-                $booksSold[$item->book_id] = [
-                    'title' => $book->title ?? ($item->book_title ?? 'Sách đã xóa'),
-                    'quantity' => $item->quantity,
-                    'revenue' => $revenue,
-                    'profit' => $profit
-                ];
+        foreach ($orders as $order) {
+            foreach ($order->items as $item) {
+                if (isset($booksSold[$item->book_id])) {
+                    $booksSold[$item->book_id]['quantity'] += $item->quantity;
+                } else {
+                    $booksSold[$item->book_id] = [
+                        'title' => $item->book_title,
+                        'quantity' => $item->quantity
+                    ];
+                }
             }
         }
-    }
 
-    return view('admin.dashboard', compact('inventory', 'totalRevenue', 'totalProfit', 'booksSold', 'viewType', 'date'));
-}
+        return view('admin.dashboard', compact('inventory', 'totalRevenue', 'booksSold', 'viewType', 'date', 'month', 'year'));
+    }
 }
