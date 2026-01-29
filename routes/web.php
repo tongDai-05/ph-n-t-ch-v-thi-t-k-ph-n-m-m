@@ -47,6 +47,5 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('dashboard', [AdminOrderController::class, 'dashboard'])->name('dashboard');
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     Route::get('users-search', [\App\Http\Controllers\Admin\UserController::class, 'search'])->name('users.search');
-    Route::post('/admin/books/{book}/import', [BookController::class, 'import'])->name('books.import');
-    Route::post('/admin/books/{book}/import', [App\Http\Controllers\BookController.php, 'import'])->name('books.import');
+    Route::post('books/{book}/import', [BookController::class, 'import'])->name('books.import');
 });
