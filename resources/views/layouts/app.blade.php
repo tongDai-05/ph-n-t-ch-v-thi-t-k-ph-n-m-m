@@ -52,6 +52,12 @@
             </a>
         </li>
 
+        @if(Auth::check() && Auth::user()->role == 'admin')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.suppliers.index') }}">Quản lý Nhà cung cấp</a>
+            </li>
+        @endif
+
         <li class="nav-item">
             <a class="nav-link text-success fw-bold" href="{{ route('admin.users.index') }}">
                 👤 Quản lý Người dùng
