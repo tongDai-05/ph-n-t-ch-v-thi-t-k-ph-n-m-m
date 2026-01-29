@@ -16,6 +16,9 @@ class Book extends Model
         'description',
         'quantity',
         'cover_image',
+        'category_id', 
+        'publisher', 
+        'import_price'
     ];
 
     public function cartItems()
@@ -27,5 +30,8 @@ class Book extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+    public function category() {
+        return $this->belongsTo(Category::class);
     }
 }

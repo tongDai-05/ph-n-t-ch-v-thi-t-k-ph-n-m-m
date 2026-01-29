@@ -85,6 +85,15 @@
         </tbody>
     </table>
 
+    <td>
+    <form action="{{ route('books.import', $book->id) }}" method="POST" class="d-flex">
+        @csrf
+        <input type="number" name="added_quantity" placeholder="SL" style="width: 60px" required min="1">
+        <input type="number" name="import_price" placeholder="Giá nhập" style="width: 100px" required min="0">
+        <button type="submit" class="btn btn-sm btn-info">Nhập</button>
+    </form>
+</td>
+
     {{ $books->links() }}
 </div>
 @endsection

@@ -25,17 +25,17 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    {{-- Left Side Of Navbar --}}
+                    
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('books.index') }}">Sách</a>
                         </li>
                     
-                        {{-- PHẦN DÀNH CHO ADMIN --}}
+                        
                         @auth
                             @if (Auth::user()->role === 'admin')
                             @php
-                            // Đếm số đơn hàng khách yêu cầu hủy nhưng trạng thái chưa phải là 'cancelled'
+                            
                                 $pendingCancels = \App\Models\Order::where('cancellation_requested', true)
                                               ->where('status', '!=', 'cancelled')
                                               ->count();
@@ -67,7 +67,6 @@
 @endauth
                     </ul>
 
-                    {{-- Right Side Of Navbar --}}
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('cart.index') }}">
