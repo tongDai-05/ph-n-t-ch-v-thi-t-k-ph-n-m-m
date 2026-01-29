@@ -85,20 +85,17 @@
         </tbody>
     </table>
 
-    <td>
-    <form action="{{ route('books.import', $book->id) }}" method="POST" class="d-flex">
+   <td>
+    <form action="{{ route('admin.books.import', $book->id) }}" method="POST" class="d-inline">
         @csrf
-        <input type="number" name="added_quantity" placeholder="SL" style="width: 60px" required min="1">
-        <input type="number" name="import_price" placeholder="Giá nhập" style="width: 100px" required min="0">
-        <button type="submit" class="btn btn-sm btn-info">Nhập</button>
-    </form>
-    <div class="input-group input-group-sm" style="width: 200px;">
-        <input type="number" name="added_quantity" class="form-control" placeholder="SL" required min="1">
-        <input type="number" name="import_price" class="form-control" placeholder="Giá vốn" required min="0" value="{{ $book->import_price }}">
-        <div class="input-group-append">
-            <button class="btn btn-info btn-sm text-white" type="submit">Nhập</button>
+        <div class="input-group input-group-sm" style="width: 170px;">
+            <input type="number" name="added_quantity" class="form-control" placeholder="SL" required min="1">
+            <input type="number" name="import_price" class="form-control" placeholder="Giá vốn" required min="0" value="{{ $book->import_price }}">
+            <div class="input-group-append">
+                <button class="btn btn-primary btn-sm" type="submit">Nhập</button>
+            </div>
         </div>
-    </div>
+    </form>
 </td>
 
     {{ $books->links() }}
