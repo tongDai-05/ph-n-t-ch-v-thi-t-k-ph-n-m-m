@@ -24,7 +24,10 @@
             <label for="price" class="form-label">Giá (VNĐ)</label>
             <input type="number" class="form-control" id="price" name="price" required min="0">
         </div>
-
+        <div>
+            <label for="publisher" class="form-label">Nhà xuất bản</label>
+            <input type="text" class="form-control" id="publisher" name="publisher" >
+        </div>
         <div class="mb-3">
             <label for="description" class="form-label">Mô tả</label>
             <textarea class="form-control" id="description" name="description" rows="4"></textarea>

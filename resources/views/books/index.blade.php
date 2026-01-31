@@ -85,6 +85,18 @@
         </tbody>
     </table>
 
+    <div class="card mb-4">
+    <div class="card-body">
+        <form action="{{ route('admin.books.import') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="input-group">
+                <input type="file" name="file" class="form-control" required>
+                <button type="submit" class="btn btn-success">Nhập sách từ Excel</button>
+            </div>
+        </form>
+    </div>
+    </div>
+
     {{ $books->links() }}
 </div>
 @endsection

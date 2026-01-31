@@ -4,6 +4,8 @@ use App\Models\Book;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Category;
+use Maatwebsite\Excel\Facades\Excel; // Quan trọng nhất: Thêm dòng này
+use App\Imports\BooksImport;
 class BookController extends Controller
 {
     public function __construct()
@@ -93,4 +95,15 @@ class BookController extends Controller
         $book->delete();
         return redirect()->route('books.index')->with('success', 'Xóa sách thành công!');
     }
+
+public function import(Request $request) 
+{
+    $request->validate([
+        'file_excel' => 'required|mimes:xlsx,xls',
+    ]);
+
+    Excel::import(new BooksImport, $request->file('file_excel'));
+
+    return redirect()->back()->with('success', 'Đã thêm sách từ Excel thành công!');
+}
 }

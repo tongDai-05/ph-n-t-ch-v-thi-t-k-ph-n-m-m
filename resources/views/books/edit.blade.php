@@ -27,7 +27,10 @@
             <label class="form-label">Số lượng</label>
             <input type="number" name="quantity" value="{{ $book->quantity }}" class="form-control" required min="0">
         </div>
-
+        <div class="mb-3">
+            <label class="form-label">Nhà xuất bản</label>
+            <input type="text" name="publisher" value="{{ $book->publisher }}" class="form-control" placeholder="Nhập nhà xuất bản">
+        </div>
         <div class="mb-3">
             <label class="form-label">Mô tả</label>
             <textarea name="description" class="form-control" rows="3">{{ $book->description }}</textarea>

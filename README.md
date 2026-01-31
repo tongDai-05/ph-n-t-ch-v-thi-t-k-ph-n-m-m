@@ -64,3 +64,7 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+Lưu ý khi tạo file Excel:
+Dòng đầu tiên của file Excel phải chứa các tiêu đề: ten_sach, tac_gia, nha_xuat_ban, gia, mo_ta, so_luong, id_the_loai (khớp với WithHeadingRow trong code).
+Cột id_the_loai phải chứa ID số tương ứng với các thể loại đã có trong bảng categories.
